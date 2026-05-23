@@ -433,14 +433,17 @@ const trudvsemAdapter = {
   },
 
   async sanityCheck() {
+    // trudvsem индексирует в основном русские госвакансии,
+    // поэтому проверяем кириллическим запросом
     const data = await safeFetch(
-      'https://opendata.trudvsem.ru/api/v1/vacancies?text=Python&limit=1',
+      'https://opendata.trudvsem.ru/api/v1/vacancies?text=' + encodeURIComponent('программист') + '&limit=1',
       { 'User-Agent': CONFIG.USER_AGENT, 'Accept': 'application/json' },
       { retries: 1 },
     );
     if (!data?.results) throw new Error('trudvsem.ru unreachable');
     const total = Number(data.results.total) || 0;
-    if (total < 100) throw new Error(`trudvsem.ru looks broken (only ${total} for Python)`);
+    // Порог снижен: trudvsem меньше hh.ru на порядок
+    if (total < 5) throw new Error(`trudvsem.ru looks broken (only ${total} vacancies)`);
     return total;
   },
 };
