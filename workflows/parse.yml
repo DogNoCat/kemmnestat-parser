@@ -1,0 +1,62 @@
+name: Parse hh.ru vacancies
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Source: auto (default) | hh | trudvsem'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - hh
+          - trudvsem
+      mode:
+        description: 'Mode: parallel (default, fast) | sequential (safer)'
+        required: false
+        default: 'parallel'
+        type: choice
+        options:
+          - parallel
+          - sequential
+      resume:
+        description: 'Resume from previous interrupted run'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run parser
+        env:
+          HH_TOKEN: ${{ secrets.HH_TOKEN }}
+        run: |
+          ARGS="--source=${{ inputs.source }}"
+          if [ "${{ inputs.mode }}" = "sequential" ]; then ARGS="$ARGS --sequential"; fi
+          if [ "${{ inputs.resume }}" = "true" ]; then ARGS="$ARGS --resume"; fi
+          echo "Running: node scripts/generate-vacancies.js $ARGS"
+          node scripts/generate-vacancies.js $ARGS
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vacancies-data
+          path: |
+            src/data/vacancies.js
+            src/data/professions.js
+            scripts/.parser-log-*.txt
+            scripts/.vacancies-history.json
+            scripts/.vacancies-progress.json
+          retention-days: 30
+          if-no-files-found: warn

@@ -1,0 +1,9 @@
+{
+  "name": "kemmnestat-parser",
+  "version": "3.0.0",
+  "description": "Parse vacancies via GitHub Actions",
+  "scripts": {
+    "parse": "node scripts/generate-vacancies.js",
+    "parse:trudvsem": "node scripts/generate-vacancies.js --source=trudvsem"
+  }
+}

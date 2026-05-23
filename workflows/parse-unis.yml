@@ -1,0 +1,39 @@
+name: Parse universities
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Source: vuzoteka or minobr'
+        required: false
+        default: 'vuzoteka'
+      limit:
+        description: 'Max universities per run (empty = all)'
+        required: false
+        default: ''
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Run universities parser
+        run: |
+          LIMIT_FLAG=""
+          if [ -n "${{ github.event.inputs.limit }}" ]; then
+            LIMIT_FLAG="--limit=${{ github.event.inputs.limit }}"
+          fi
+          node scripts/generate-universities.js --source=${{ github.event.inputs.source }} $LIMIT_FLAG
+      - uses: actions/upload-artifact@v5
+        with:
+          name: universities-data
+          path: |
+            src/data/unis_moscow.js
+            src/data/unis_spb_south.js
+            src/data/unis_ural_siberia.js
+            src/data/unis_fareast.js
+          retention-days: 14
